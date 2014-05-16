@@ -35,6 +35,8 @@ setup(
     zip_safe=False,
     install_requires=[
         'setuptools',
+        'collective.zamqp',
+        'imio.dataexchange.core',
     ],
     extras_require={'test': ['plone.app.testing']},
     entry_points="""
