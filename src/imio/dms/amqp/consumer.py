@@ -20,7 +20,7 @@ from imio.dms.amqp import interfaces
 class InvoiceConsumer(base.DMSConsumer, Consumer):
     grok.name('dms.invoice')
     connection_id = 'dms.connection'
-    exchange = 'imiodocument'
+    exchange = 'dms.invoice'
     marker = interfaces.IInvoice
     queuename = 'dms.invoice.{0}'
 
@@ -33,7 +33,7 @@ def consume_invoices(message, event):
 class IncomingMailConsumer(base.DMSConsumer, Consumer):
     grok.name('dms.incomingmail')
     connection_id = 'dms.connection'
-    exchange = 'imiodocument'
+    exchange = 'dms.incomingmail'
     marker = interfaces.IIncomingMail
     queuename = 'dms.incomingmail.{0}'
 
