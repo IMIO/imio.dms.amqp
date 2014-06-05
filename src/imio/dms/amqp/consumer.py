@@ -2,6 +2,7 @@
 
 import cPickle
 
+from App.config import getConfiguration
 from five import grok
 from zope.component import getUtility
 from zope.interface import Interface
@@ -32,11 +33,26 @@ class IInvoice(Interface):
 
 
 class InvoiceConsumer(Consumer):
-    grok.name('dms.invoice.AA')
-    routing_key = 'AA'
+    grok.name('dms.invoice')
     connection_id = 'dms.connection'
     exchange = 'imiodocument'
     marker = IInvoice
+
+    @property
+    def queue(self):
+        client_id = self.get_config('client_id')
+        return 'dms.invoice.{0}'.format(client_id)
+
+    @property
+    def routing_key(self):
+        return self.get_config('routing_key')
+
+    def get_config(self, key):
+        config = getattr(getConfiguration(), 'product_config', {})
+        package_config = config.get('imio.dms.amqp')
+        if package_config is None:
+            raise ValueError('The config for the package is missing')
+        return package_config.get(key, '')
 
 
 class Dummy(object):
