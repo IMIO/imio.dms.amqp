@@ -2,10 +2,8 @@
 
 import cPickle
 
-from App.config import getConfiguration
 from five import grok
 from zope.component import getUtility
-from zope.interface import Interface
 from zope.globalrequest import getRequest
 
 from Products.CMFCore.interfaces import ISiteRoot
@@ -15,44 +13,34 @@ from collective.dms.batchimport.utils import createDocument
 from collective.zamqp.consumer import Consumer
 from collective.zamqp.interfaces import IMessageArrivedEvent
 
-
-class MessageAdapter(object):
-
-    def __init__(self, context):
-        self.context = context
-
-    def __getattr__(self, key):
-        try:
-            return self.__getattribute__(key)
-        except AttributeError:
-            return getattr(self.context, key)
+from imio.dms.amqp import base
+from imio.dms.amqp import interfaces
 
 
-class IInvoice(Interface):
-    """Marker interface for invoices"""
-
-
-class InvoiceConsumer(Consumer):
+class InvoiceConsumer(base.DMSConsumer, Consumer):
     grok.name('dms.invoice')
     connection_id = 'dms.connection'
     exchange = 'imiodocument'
-    marker = IInvoice
+    marker = interfaces.IInvoice
+    queuename = 'dms.invoice.{0}'
 
-    @property
-    def queue(self):
-        client_id = self.get_config('client_id')
-        return 'dms.invoice.{0}'.format(client_id)
 
-    @property
-    def routing_key(self):
-        return self.get_config('routing_key')
+@grok.subscribe(interfaces.IInvoice, IMessageArrivedEvent)
+def consume_invoices(message, event):
+    create_content('incoming-mail', 'dmsincomingmail', message)
 
-    def get_config(self, key):
-        config = getattr(getConfiguration(), 'product_config', {})
-        package_config = config.get('imio.dms.amqp')
-        if package_config is None:
-            raise ValueError('The config for the package is missing')
-        return package_config.get(key, '')
+
+class IncomingMailConsumer(base.DMSConsumer, Consumer):
+    grok.name('dms.incomingmail')
+    connection_id = 'dms.connection'
+    exchange = 'imiodocument'
+    marker = interfaces.IIncomingMail
+    queuename = 'dms.incomingmail.{0}'
+
+
+@grok.subscribe(interfaces.IIncomingMail, IMessageArrivedEvent)
+def consume_incoming_mails(message, event):
+    create_content('incoming-mail', 'dmsincomingmail', message)
 
 
 class Dummy(object):
@@ -62,34 +50,15 @@ class Dummy(object):
         self.request = request
 
 
-@grok.subscribe(IInvoice, IMessageArrivedEvent)
-def consume_invoices(message, event):
-    invoice = InvoiceAdapter(cPickle.loads(message.body))
+def create_content(folder, document_type, message):
+    obj = base.MessageAdapter(cPickle.loads(message.body))
 
     site = getUtility(ISiteRoot)
-    folder = site.unrestrictedTraverse('incoming-mail')
+    folder = site.unrestrictedTraverse(folder)
     context = Dummy(folder, getRequest())
-    doc = open(invoice.filepath, 'r')
-    invoice_file = NamedBlobFile(doc.read(), filename=invoice.filename)
-    createDocument(context, folder, 'dmsincomingmail', '',
-                   invoice_file, owner=invoice.creator,
-                   metadata=invoice.metadata)
+    doc = open(obj.filepath, 'r')
+    obj_file = NamedBlobFile(doc.read(), filename=obj.filename)
+    createDocument(context, folder, document_type, '', obj_file,
+                   owner=obj.creator, metadata=obj.metadata)
     doc.close()
     message.ack()
-
-
-class InvoiceAdapter(MessageAdapter):
-
-    @property
-    def metadata(self):
-        return {
-            'id': self.context.external_id,
-            'file_title': self.context.file_metadata.get('filename'),
-            'external_reference_no': self.context.external_id,
-            'mail_type': 'facture',
-            'scan_id': self.context.external_id,
-            'pages_number': self.context.file_metadata.get('pages_number'),
-            'scan_date': self.context.scan_date,
-            'scan_user': self.context.file_metadata.get('user'),
-            'scanner': self.context.file_metadata.get('pc'),
-        }
