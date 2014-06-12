@@ -12,6 +12,7 @@ from collective.dms.batchimport.utils import createDocument
 
 from collective.zamqp.consumer import Consumer
 from collective.zamqp.interfaces import IMessageArrivedEvent
+from collective.zamqp.interfaces import IProducer
 
 from imio.dms.amqp import base
 from imio.dms.amqp import interfaces
@@ -28,6 +29,10 @@ class InvoiceConsumer(base.DMSConsumer, Consumer):
 @grok.subscribe(interfaces.IInvoice, IMessageArrivedEvent)
 def consume_invoices(message, event):
     create_content('incoming-mail', 'dmsincomingmail', message)
+    producer = getUtility(IProducer, 'dms.invoice.videocoding')
+    producer._register()
+    producer.publish(message.body)
+    message.ack()
 
 
 class IncomingMailConsumer(base.DMSConsumer, Consumer):
@@ -41,6 +46,7 @@ class IncomingMailConsumer(base.DMSConsumer, Consumer):
 @grok.subscribe(interfaces.IIncomingMail, IMessageArrivedEvent)
 def consume_incoming_mails(message, event):
     create_content('incoming-mail', 'dmsincomingmail', message)
+    message.ack()
 
 
 class Dummy(object):
@@ -61,4 +67,3 @@ def create_content(folder, document_type, message):
     createDocument(context, folder, document_type, '', obj_file,
                    owner=obj.creator, metadata=obj.metadata)
     doc.close()
-    message.ack()

@@ -46,3 +46,22 @@ class DMSConsumer(object):
         if package_config is None:
             raise ValueError('The config for the package is missing')
         return package_config.get(key, '')
+
+
+class DMSProducer(object):
+
+    @property
+    def queue(self):
+        client_id = self.get_config('client_id')
+        return self.queuename.format(client_id)
+
+    @property
+    def routing_key(self):
+        return self.get_config('routing_key')
+
+    def get_config(self, key):
+        config = getattr(getConfiguration(), 'product_config', {})
+        package_config = config.get('imio.dms.amqp')
+        if package_config is None:
+            raise ValueError('The config for the package is missing')
+        return package_config.get(key, '')
