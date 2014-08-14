@@ -4,11 +4,16 @@ import cPickle
 
 from five import grok
 from zope.component import getUtility
+from zope.component import queryUtility
 from zope.globalrequest import getRequest
 
 from Products.CMFCore.interfaces import ISiteRoot
+from plone.dexterity.utils import createContentInContainer
+from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.namedfile.file import NamedBlobFile
 from collective.dms.batchimport.utils import createDocument
+from collective.dms.batchimport.utils import log
+import plone.api
 
 from collective.zamqp.consumer import Consumer
 from collective.zamqp.interfaces import IMessageArrivedEvent
@@ -64,6 +69,34 @@ def create_content(folder, document_type, message):
     context = Dummy(folder, getRequest())
     doc = open(obj.filepath, 'r')
     obj_file = NamedBlobFile(doc.read(), filename=obj.filename)
-    createDocument(context, folder, document_type, '', obj_file,
-                   owner=obj.creator, metadata=obj.metadata)
+
+    document = get_existing_document(folder, document_type, obj)
+    if document:
+        update_document(document, obj, obj_file)
+    else:
+        createDocument(context, folder, document_type, '', obj_file,
+                       owner=obj.creator, metadata=obj.metadata)
     doc.close()
+
+
+def get_existing_document(folder, document_type, obj):
+    folder_path = '/'.join(folder.getPhysicalPath())
+    id_normalizer = queryUtility(IIDNormalizer)
+    obj_id = id_normalizer.normalize(obj.metadata.get('id'))
+    result = folder.portal_catalog(portal_type=document_type,
+                                   path={'query': folder_path, 'depth': 1},
+                                   id=obj_id)
+    if result:
+        return result[0].getObject()
+
+
+def update_document(document, obj, obj_file):
+    plone.api.content.delete(obj=document[document.file_title])
+    for key, value in obj.metadata.items():
+        setattr(document, key, value)
+    user = plone.api.user.get(obj.creator)
+    document.changeOwnership(user)
+    createContentInContainer(document, 'dmsmainfile',
+                             title=obj.metadata.get('file_title'),
+                             file=obj_file)
+    log.info('document has been updated (id: {0})'.format(document.id))

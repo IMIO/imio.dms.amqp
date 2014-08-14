@@ -35,8 +35,10 @@ setup(
     zip_safe=False,
     install_requires=[
         'setuptools',
+        'collective.dms.batchimport',
         'collective.zamqp',
         'imio.dataexchange.core',
+        'plone.dexterity',
     ],
     extras_require={'test': ['plone.app.testing']},
     entry_points="""
