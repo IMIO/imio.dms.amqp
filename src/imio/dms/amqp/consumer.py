@@ -17,7 +17,7 @@ import plone.api
 
 from collective.zamqp.consumer import Consumer
 from collective.zamqp.interfaces import IMessageArrivedEvent
-from collective.zamqp.interfaces import IProducer
+# from collective.zamqp.interfaces import IProducer
 
 from imio.dms.amqp import base
 from imio.dms.amqp import interfaces
@@ -34,9 +34,9 @@ class InvoiceConsumer(base.DMSConsumer, Consumer):
 @grok.subscribe(interfaces.IInvoice, IMessageArrivedEvent)
 def consume_invoices(message, event):
     create_content('incoming-mail', 'dmsincomingmail', message)
-    producer = getUtility(IProducer, 'dms.invoice.videocoding')
-    producer._register()
-    producer.publish(message.body)
+    # producer = getUtility(IProducer, 'dms.invoice.videocoding')
+    # producer._register()
+    # producer.publish(message.body)
     message.ack()
 
 
