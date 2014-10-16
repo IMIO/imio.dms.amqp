@@ -1,6 +1,9 @@
 # encoding: utf-8
 
+from requests.auth import HTTPBasicAuth
 import cPickle
+import hashlib
+import requests
 
 from five import grok
 from zope.component import getUtility
@@ -33,7 +36,8 @@ class InvoiceConsumer(base.DMSConsumer, Consumer):
 
 @grok.subscribe(interfaces.IInvoice, IMessageArrivedEvent)
 def consume_invoices(message, event):
-    create_content('incoming-mail', 'dmsincomingmail', message)
+    doc = Document('incoming-mail', 'dmsincomingmail', message)
+    doc.create_or_update()
     # producer = getUtility(IProducer, 'dms.invoice.videocoding')
     # producer._register()
     # producer.publish(message.body)
@@ -50,7 +54,8 @@ class IncomingMailConsumer(base.DMSConsumer, Consumer):
 
 @grok.subscribe(interfaces.IIncomingMail, IMessageArrivedEvent)
 def consume_incoming_mails(message, event):
-    create_content('incoming-mail', 'dmsincomingmail', message)
+    doc = Document('incoming-mail', 'dmsincomingmail', message)
+    doc.create_or_update()
     message.ack()
 
 
@@ -61,42 +66,74 @@ class Dummy(object):
         self.request = request
 
 
-def create_content(folder, document_type, message):
-    obj = base.MessageAdapter(cPickle.loads(message.body))
+class Document(object):
 
-    site = getUtility(ISiteRoot)
-    folder = site.unrestrictedTraverse(folder)
-    context = Dummy(folder, getRequest())
-    doc = open(obj.filepath, 'r')
-    obj_file = NamedBlobFile(doc.read(), filename=obj.filename)
+    def __init__(self, folder, document_type, message):
+        self.folder = self.site.unrestrictedTraverse(folder)
+        self.document_type = document_type
+        self.obj = base.MessageAdapter(cPickle.loads(message.body))
+        self.context = Dummy(self.folder, getRequest())
 
-    document = get_existing_document(folder, document_type, obj)
-    if document:
-        update_document(document, obj, obj_file)
-    else:
-        createDocument(context, folder, document_type, '', obj_file,
-                       owner=obj.creator, metadata=obj.metadata)
-    doc.close()
+    @property
+    def site(self):
+        return getUtility(ISiteRoot)
 
+    @property
+    def existing_document(self):
+        folder_path = '/'.join(self.folder.getPhysicalPath())
+        id_normalizer = queryUtility(IIDNormalizer)
+        obj_id = id_normalizer.normalize(self.obj.metadata.get('id'))
+        result = self.folder.portal_catalog(
+            portal_type=self.document_type,
+            path={'query': folder_path, 'depth': 1},
+            id=obj_id,
+        )
+        if result:
+            return result[0].getObject()
 
-def get_existing_document(folder, document_type, obj):
-    folder_path = '/'.join(folder.getPhysicalPath())
-    id_normalizer = queryUtility(IIDNormalizer)
-    obj_id = id_normalizer.normalize(obj.metadata.get('id'))
-    result = folder.portal_catalog(portal_type=document_type,
-                                   path={'query': folder_path, 'depth': 1},
-                                   id=obj_id)
-    if result:
-        return result[0].getObject()
+    @property
+    def file_content(self):
+        url = '%s/file/%s/%s' % (base.get_config('ws_url'),
+                                 self.obj.client_id,
+                                 self.obj.external_id)
+        r = requests.get(url, auth=HTTPBasicAuth('testuser', 'test'))
+        if hashlib.md5(r.content).hexdigest() != self.obj.file_md5:
+            raise ValueError("MD5 doesn't match")
+        return r.content
 
+    @property
+    def http_auth(self):
+        return HTTPBasicAuth(base.get_config('ws_login'),
+                             base.get_config('ws_password'))
 
-def update_document(document, obj, obj_file):
-    plone.api.content.delete(obj=document[document.file_title])
-    for key, value in obj.metadata.items():
-        setattr(document, key, value)
-    user = plone.api.user.get(obj.creator)
-    document.changeOwnership(user)
-    createContentInContainer(document, 'dmsmainfile',
-                             title=obj.metadata.get('file_title'),
-                             file=obj_file)
-    log.info('document has been updated (id: {0})'.format(document.id))
+    def create_or_update(self):
+        obj_file = NamedBlobFile(self.file_content, filename=self.obj.filename)
+        document = self.existing_document
+        if document:
+            self.update(document, obj_file)
+        else:
+            self.create(obj_file)
+
+    def update(self, document, obj_file):
+        plone.api.content.delete(obj=document[document.file_title])
+        for key, value in self.obj.metadata.items():
+            setattr(document, key, value)
+        user = plone.api.user.get(self.obj.creator)
+        document.changeOwnership(user)
+        createContentInContainer(
+            document,
+            'dmsmainfile',
+            title=self.obj.metadata.get('file_title'),
+            file=obj_file,
+        )
+        log.info('document has been updated (id: {0})'.format(document.id))
+
+    def create(self, obj_file):
+        createDocument(
+            self.context,
+            self.folder,
+            self.document_type,
+            '',
+            obj_file,
+            owner=self.obj.creator,
+            metadata=self.obj.metadata)

@@ -39,6 +39,7 @@ setup(
         'collective.zamqp',
         'imio.dataexchange.core',
         'plone.dexterity',
+        'requests',
     ],
     extras_require={'test': ['plone.app.testing']},
     entry_points="""
