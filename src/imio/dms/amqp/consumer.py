@@ -96,7 +96,7 @@ class Document(object):
         url = '%s/file/%s/%s' % (base.get_config('ws_url'),
                                  self.obj.client_id,
                                  self.obj.external_id)
-        r = requests.get(url, auth=HTTPBasicAuth('testuser', 'test'))
+        r = requests.get(url, auth=self.http_auth)
         if hashlib.md5(r.content).hexdigest() != self.obj.file_md5:
             raise ValueError("MD5 doesn't match")
         return r.content
