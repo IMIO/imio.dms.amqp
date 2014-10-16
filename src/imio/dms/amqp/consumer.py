@@ -97,6 +97,8 @@ class Document(object):
                                  self.obj.client_id,
                                  self.obj.external_id)
         r = requests.get(url, auth=self.http_auth)
+        if r.status_code != 200:
+            raise ValueError('HTTP error : %s' % r.status_code)
         if hashlib.md5(r.content).hexdigest() != self.obj.file_md5:
             raise ValueError("MD5 doesn't match")
         return r.content
