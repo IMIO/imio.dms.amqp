@@ -6,11 +6,10 @@ import hashlib
 import requests
 
 from five import grok
-from zope.component import getUtility
 from zope.component import queryUtility
+from zope.component.hooks import getSite
 from zope.globalrequest import getRequest
 
-from Products.CMFCore.interfaces import ISiteRoot
 from plone.dexterity.utils import createContentInContainer
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.namedfile.file import NamedBlobFile
@@ -76,7 +75,7 @@ class Document(object):
 
     @property
     def site(self):
-        return getUtility(ISiteRoot)
+        return getSite()
 
     @property
     def existing_document(self):
