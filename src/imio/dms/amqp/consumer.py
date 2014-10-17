@@ -119,8 +119,6 @@ class Document(object):
         plone.api.content.delete(obj=document[document.file_title])
         for key, value in self.obj.metadata.items():
             setattr(document, key, value)
-        user = plone.api.user.get(self.obj.creator)
-        document.changeOwnership(user)
         createContentInContainer(
             document,
             'dmsmainfile',
