@@ -27,7 +27,6 @@ class MessageAdapter(object):
         return {
             'id': self.context.external_id,
             'file_title': self.context.file_metadata.get('filename'),
-            'external_reference_no': self.context.external_id,
             'mail_type': self.context.mail_type,
             'scan_id': self.context.external_id,
             'pages_number': self.context.file_metadata.get('pages_number'),
