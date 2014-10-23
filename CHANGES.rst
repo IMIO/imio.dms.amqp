@@ -4,7 +4,10 @@ Changelog
 0.1.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Correct bug when deleting file to replace.
+  [sgeulette]
+- Remove ownership change when updating.
+  [sgeulette]
 
 
 0.1.1 (2014-10-17)
