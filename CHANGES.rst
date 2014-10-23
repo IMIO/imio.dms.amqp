@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.1.2 (unreleased)
+0.1.2 (2014-10-23)
 ------------------
 
 - Correct bug when deleting file to replace.
