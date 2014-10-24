@@ -119,6 +119,8 @@ class Document(object):
         files = document.listFolderContents(contentFilter={'portal_type': 'dmsmainfile', 'title': document.file_title})
         if files:
             plone.api.content.delete(obj=files[-1])
+        # dont modify id !
+        del self.obj.metadata['id']
         for key, value in self.obj.metadata.items():
             setattr(document, key, value)
         createContentInContainer(

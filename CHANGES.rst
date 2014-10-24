@@ -4,7 +4,8 @@ Changelog
 0.1.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Correct bug when updating file. Id must not be changed (in unicode)
+  [sgeulette]
 
 
 0.1.2 (2014-10-23)
