@@ -120,8 +120,9 @@ class Document(object):
         if files:
             plone.api.content.delete(obj=files[-1])
         # dont modify id !
-        del self.obj.metadata['id']
-        for key, value in self.obj.metadata.items():
+        metadata = self.obj.metadata
+        del metadata['id']
+        for key, value in metadata.items():
             setattr(document, key, value)
         createContentInContainer(
             document,
