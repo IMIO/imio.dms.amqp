@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.1.3 (unreleased)
+0.1.3 (2014-10-24)
 ------------------
 
 - Correct bug when updating file. Id must not be changed (in unicode)
