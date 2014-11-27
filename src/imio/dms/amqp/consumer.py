@@ -115,6 +115,11 @@ class Document(object):
         else:
             self.create(obj_file)
 
+    def set_scan_attr(self, main_file):
+        for key, value in self.obj.metadata.items():
+            if key in ('scan_id', 'pages_number', 'scan_date', 'scan_user', 'scanner'):
+                setattr(main_file, key, value)
+
     def update(self, document, obj_file):
         files = document.listFolderContents(contentFilter={'portal_type': 'dmsmainfile', 'title': document.file_title})
         if files:
@@ -124,16 +129,17 @@ class Document(object):
         del metadata['id']
         for key, value in metadata.items():
             setattr(document, key, value)
-        createContentInContainer(
+        new_file = createContentInContainer(
             document,
             'dmsmainfile',
             title=self.obj.metadata.get('file_title'),
             file=obj_file,
         )
+        self.set_scan_attr(new_file)
         log.info('document has been updated (id: {0})'.format(document.id))
 
     def create(self, obj_file):
-        createDocument(
+        (document, main_file) = createDocument(
             self.context,
             self.folder,
             self.document_type,
@@ -141,3 +147,4 @@ class Document(object):
             obj_file,
             owner=self.obj.creator,
             metadata=self.obj.metadata)
+        self.set_scan_attr(main_file)
