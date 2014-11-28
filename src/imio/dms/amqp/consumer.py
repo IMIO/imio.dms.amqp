@@ -10,6 +10,7 @@ from zope.component import queryUtility
 from zope.component.hooks import getSite
 from zope.globalrequest import getRequest
 
+from Products.CMFPlone.utils import base_hasattr
 from plone.dexterity.utils import createContentInContainer
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.namedfile.file import NamedBlobFile
@@ -71,7 +72,13 @@ class Document(object):
         self.folder = self.site.unrestrictedTraverse(folder)
         self.document_type = document_type
         self.obj = base.MessageAdapter(cPickle.loads(message.body))
+        self.metadata = self.obj.metadata.copy()
         self.context = Dummy(self.folder, getRequest())
+        self.scan_fields = {'scan_id': '', 'pages_number': '', 'scan_date': '', 'scan_user': '', 'scanner': ''}
+        keys = self.metadata.keys()
+        for key in keys:
+            if key in self.scan_fields:
+                self.scan_fields[key] = self.metadata.pop(key)
 
     @property
     def site(self):
@@ -81,7 +88,7 @@ class Document(object):
     def existing_file(self):
         result = self.folder.portal_catalog(
             portal_type='dmsmainfile',
-            scan_id=self.obj.metadata.get('scan_id'),
+            scan_id=self.scan_fields.get('scan_id'),
         )
         if result:
             return result[0].getObject()
@@ -112,8 +119,8 @@ class Document(object):
             self.create(obj_file)
 
     def set_scan_attr(self, main_file):
-        for key, value in self.obj.metadata.items():
-            if key in ('scan_id', 'pages_number', 'scan_date', 'scan_user', 'scanner'):
+        for key, value in self.scan_fields.items():
+            if value:
                 setattr(main_file, key, value)
         main_file.reindexObject(idxs=('scan_id',))
 
@@ -121,18 +128,18 @@ class Document(object):
         plone.api.content.delete(obj=the_file)
         document = the_file.aq_parent
         # dont modify id !
-        metadata = self.obj.metadata
-        del metadata['id']
-        for key, value in metadata.items():
-            setattr(document, key, value)
+        del self.metadata['id']
+        for key, value in self.metadata.items():
+            if base_hasattr(document, key) and value:
+                setattr(document, key, value)
         new_file = createContentInContainer(
             document,
             'dmsmainfile',
-            title=self.obj.metadata.get('file_title'),
+            title=self.metadata.get('file_title'),
             file=obj_file,
         )
         self.set_scan_attr(new_file)
-        log.info('file has been updated (scan_id: {0})'.format(self.obj.metadata.get('scan_id')))
+        log.info('file has been updated (scan_id: {0})'.format(self.metadata.get('scan_id')))
 
     def create(self, obj_file):
         (document, main_file) = createDocument(
@@ -142,5 +149,5 @@ class Document(object):
             '',
             obj_file,
             owner=self.obj.creator,
-            metadata=self.obj.metadata)
+            metadata=self.metadata)
         self.set_scan_attr(main_file)
