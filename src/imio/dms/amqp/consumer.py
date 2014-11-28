@@ -78,14 +78,10 @@ class Document(object):
         return getSite()
 
     @property
-    def existing_document(self):
-        folder_path = '/'.join(self.folder.getPhysicalPath())
-        id_normalizer = queryUtility(IIDNormalizer)
-        obj_id = id_normalizer.normalize(self.obj.metadata.get('id'))
+    def existing_file(self):
         result = self.folder.portal_catalog(
-            portal_type=self.document_type,
-            path={'query': folder_path, 'depth': 1},
-            id=obj_id,
+            portal_type='dmsmainfile',
+            scan_id=self.obj.metadata.get('scan_id'),
         )
         if result:
             return result[0].getObject()
@@ -109,9 +105,9 @@ class Document(object):
 
     def create_or_update(self):
         obj_file = NamedBlobFile(self.file_content, filename=self.obj.filename)
-        document = self.existing_document
-        if document:
-            self.update(document, obj_file)
+        the_file = self.existing_file
+        if the_file:
+            self.update(the_file, obj_file)
         else:
             self.create(obj_file)
 
@@ -119,11 +115,11 @@ class Document(object):
         for key, value in self.obj.metadata.items():
             if key in ('scan_id', 'pages_number', 'scan_date', 'scan_user', 'scanner'):
                 setattr(main_file, key, value)
+        main_file.reindexObject(idxs=('scan_id',))
 
-    def update(self, document, obj_file):
-        files = document.listFolderContents(contentFilter={'portal_type': 'dmsmainfile', 'title': document.file_title})
-        if files:
-            plone.api.content.delete(obj=files[-1])
+    def update(self, the_file, obj_file):
+        plone.api.content.delete(obj=the_file)
+        document = the_file.aq_parent
         # dont modify id !
         metadata = self.obj.metadata
         del metadata['id']
@@ -136,7 +132,7 @@ class Document(object):
             file=obj_file,
         )
         self.set_scan_attr(new_file)
-        log.info('document has been updated (id: {0})'.format(document.id))
+        log.info('file has been updated (scan_id: {0})'.format(self.obj.metadata.get('scan_id')))
 
     def create(self, obj_file):
         (document, main_file) = createDocument(
