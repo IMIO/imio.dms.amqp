@@ -4,7 +4,10 @@ Changelog
 0.1.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- filter metadata to separate dmsmail and mainfile attributes
+  [sgeulette]
+- Get file by the scan_id index
+  [sgeulette]
 
 
 0.1.4 (2014-11-27)
