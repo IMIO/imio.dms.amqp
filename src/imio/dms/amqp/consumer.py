@@ -142,6 +142,8 @@ class Document(object):
         log.info('file has been updated (scan_id: {0})'.format(self.metadata.get('scan_id')))
 
     def create(self, obj_file):
+        if self.scan_fields['scan_date']:
+            self.metadata['reception_date'] = self.scan_fields['scan_date']
         (document, main_file) = createDocument(
             self.context,
             self.folder,

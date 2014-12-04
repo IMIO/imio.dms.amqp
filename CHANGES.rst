@@ -4,7 +4,8 @@ Changelog
 0.1.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Set reception_date as scan_date when creating incomingdmsmail.
+  [sgeulette]
 
 
 0.1.5 (2014-11-28)
