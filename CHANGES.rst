@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.1.6 (unreleased)
+0.1.6 (2014-12-04)
 ------------------
 
 - Set reception_date as scan_date when creating incomingdmsmail.
