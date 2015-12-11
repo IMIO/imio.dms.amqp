@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.1.7 (unreleased)
+0.1.7 (2015-12-11)
 ------------------
 
 - Initialize to empty list recipient_groups to avoid diff error.
