@@ -4,8 +4,8 @@ Changelog
 0.1.7 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Initialize to empty list recipient_groups to avoid diff error.
+  [sgeulette]
 
 0.1.6 (2014-12-04)
 ------------------

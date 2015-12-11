@@ -144,6 +144,8 @@ class Document(object):
     def create(self, obj_file):
         if self.scan_fields['scan_date']:
             self.metadata['reception_date'] = self.scan_fields['scan_date']
+        if 'recipient_groups' not in self.metadata:
+            self.metadata['recipient_groups'] = []
         (document, main_file) = createDocument(
             self.context,
             self.folder,
