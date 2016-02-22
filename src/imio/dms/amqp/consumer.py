@@ -4,7 +4,10 @@ from requests.auth import HTTPBasicAuth
 import cPickle
 import hashlib
 import requests
+import time
+import transaction
 
+from ZODB.POSException import ConflictError
 from five import grok
 from zope.component.hooks import getSite
 from zope.globalrequest import getRequest
@@ -24,6 +27,20 @@ from imio.dms.amqp import base
 from imio.dms.amqp import interfaces
 
 
+def commit(retry_count=10):
+    commited = False
+    while commited == False:
+        try:
+            raise ConflictError
+            transaction.commit()
+            commited = True
+        except ConflictError as e:
+            time.sleep(5)
+            retry_count -= 1
+            if retry_count <= 0:
+                raise e
+
+
 class InvoiceConsumer(base.DMSConsumer, Consumer):
     grok.name('dms.invoice')
     connection_id = 'dms.connection'
@@ -39,6 +56,7 @@ def consume_invoices(message, event):
     # producer = getUtility(IProducer, 'dms.invoice.videocoding')
     # producer._register()
     # producer.publish(message.body)
+    commit()
     message.ack()
 
 
@@ -54,6 +72,7 @@ class IncomingMailConsumer(base.DMSConsumer, Consumer):
 def consume_incoming_mails(message, event):
     doc = Document('incoming-mail', 'dmsincomingmail', message)
     doc.create_or_update()
+    commit()
     message.ack()
 
 
