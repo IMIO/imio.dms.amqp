@@ -31,7 +31,6 @@ def commit(retry_count=10):
     commited = False
     while commited == False:
         try:
-            raise ConflictError
             transaction.commit()
             commited = True
         except ConflictError as e:
