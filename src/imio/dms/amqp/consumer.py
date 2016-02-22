@@ -6,13 +6,11 @@ import hashlib
 import requests
 
 from five import grok
-from zope.component import queryUtility
 from zope.component.hooks import getSite
 from zope.globalrequest import getRequest
 
 from Products.CMFPlone.utils import base_hasattr
 from plone.dexterity.utils import createContentInContainer
-from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.namedfile.file import NamedBlobFile
 from collective.dms.batchimport.utils import createDocument
 from collective.dms.batchimport.utils import log
