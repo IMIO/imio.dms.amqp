@@ -4,8 +4,8 @@ Changelog
 0.1.8 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- When consuming, retry 10 times in case of zodb conflict error.
+  [mpeeters]
 
 0.1.7 (2015-12-11)
 ------------------
