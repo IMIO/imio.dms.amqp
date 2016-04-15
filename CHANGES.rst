@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.1.8 (unreleased)
+0.1.8 (2016-04-15)
 ------------------
 
 - When consuming, retry 10 times in case of zodb conflict error.
