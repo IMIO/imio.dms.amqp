@@ -11,7 +11,7 @@ long_description = (
 setup(
     name='imio.dms.amqp',
     version=version,
-    description="",
+    description="dms usage of amqp",
     long_description=long_description,
     # Get more strings from
     # http://pypi.python.org/pypi?%3Aaction=list_classifiers
@@ -23,7 +23,7 @@ setup(
         "Programming Language :: Python :: 2.7",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    keywords='',
+    keywords='Plone Python IMIO',
     author='IMIO',
     author_email='support@imio.be',
     url='https://github.com/imio/',
