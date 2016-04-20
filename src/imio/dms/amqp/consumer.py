@@ -91,6 +91,7 @@ class Document(object):
         self.metadata = self.obj.metadata.copy()
         self.context = Dummy(self.folder, getRequest())
         self.scan_fields = {'scan_id': '', 'pages_number': '', 'scan_date': '', 'scan_user': '', 'scanner': ''}
+        self.scan_fields['version'] = self.obj.version
         keys = self.metadata.keys()
         for key in keys:
             if key in self.scan_fields:
@@ -111,9 +112,10 @@ class Document(object):
 
     @property
     def file_content(self):
-        url = '%s/file/%s/%s' % (base.get_config('ws_url'),
-                                 self.obj.client_id,
-                                 self.obj.external_id)
+        url = '%s/file/%s/%s/%s' % (base.get_config('ws_url'),
+                                    self.obj.client_id,
+                                    self.obj.external_id,
+                                    self.obj.version)
         r = requests.get(url, auth=self.http_auth)
         if r.status_code != 200:
             raise ValueError('HTTP error : %s' % r.status_code)
@@ -141,6 +143,9 @@ class Document(object):
         main_file.reindexObject(idxs=('scan_id',))
 
     def update(self, the_file, obj_file):
+        if self.obj.version < getattr(the_file, 'version', 1):
+            log.info('file not updated due to an oldest version (scan_id: {0})'.format(the_file.scan_id))
+            return
         plone.api.content.delete(obj=the_file)
         document = the_file.aq_parent
         # dont modify id !
@@ -155,7 +160,7 @@ class Document(object):
             file=obj_file,
         )
         self.set_scan_attr(new_file)
-        log.info('file has been updated (scan_id: {0})'.format(self.metadata.get('scan_id')))
+        log.info('file has been updated (scan_id: {0})'.format(new_file.scan_id))
 
     def create(self, obj_file):
         if self.scan_fields['scan_date']:
