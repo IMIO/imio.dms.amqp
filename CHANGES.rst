@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.1.9 (unreleased)
+0.1.9 (2016-04-22)
 ------------------
 
 - Handle properly multiple versions for files
