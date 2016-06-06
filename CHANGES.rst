@@ -4,8 +4,8 @@ Changelog
 0.1.10 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Reindex incomingmail SearchableText index containing scan_id.
+  [sgeulette]
 
 0.1.9 (2016-04-22)
 ------------------

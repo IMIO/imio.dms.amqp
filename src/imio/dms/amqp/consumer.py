@@ -160,6 +160,7 @@ class Document(object):
             file=obj_file,
         )
         self.set_scan_attr(new_file)
+        document.reindexObject(idxs=('SearchableText'))
         log.info('file has been updated (scan_id: {0})'.format(new_file.scan_id))
 
     def create(self, obj_file):
@@ -176,3 +177,4 @@ class Document(object):
             owner=self.obj.creator,
             metadata=self.metadata)
         self.set_scan_attr(main_file)
+        document.reindexObject(idxs=('SearchableText'))
