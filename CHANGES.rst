@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.1.10 (unreleased)
+0.1.10 (2016-06-06)
 -------------------
 
 - Reindex incomingmail SearchableText index containing scan_id.
