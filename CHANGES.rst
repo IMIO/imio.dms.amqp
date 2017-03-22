@@ -4,7 +4,8 @@ Changelog
 0.1.11 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Remove the consumer for invoice
+  [mpeeters]
 
 
 0.1.10 (2016-06-06)
