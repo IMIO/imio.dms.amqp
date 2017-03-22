@@ -40,25 +40,6 @@ def commit(retry_count=10):
                 raise e
 
 
-class InvoiceConsumer(base.DMSConsumer, Consumer):
-    grok.name('dms.invoice')
-    connection_id = 'dms.connection'
-    exchange = 'dms.invoice'
-    marker = interfaces.IInvoice
-    queuename = 'dms.invoice.{0}'
-
-
-@grok.subscribe(interfaces.IInvoice, IMessageArrivedEvent)
-def consume_invoices(message, event):
-    doc = Document('incoming-mail', 'dmsincomingmail', message)
-    doc.create_or_update()
-    # producer = getUtility(IProducer, 'dms.invoice.videocoding')
-    # producer._register()
-    # producer.publish(message.body)
-    commit()
-    message.ack()
-
-
 class IncomingMailConsumer(base.DMSConsumer, Consumer):
     grok.name('dms.incomingmail')
     connection_id = 'dms.connection'
